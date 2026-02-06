@@ -1,326 +1,191 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/k890snLZ)
-[![Open in Visual Studio Code](https://classroom.github.com/assets/open-in-vscode-2e0aaae1b6195c2367325f4f02e2d04e9abb55f0b24a779b69b11b9e10269abc.svg)](https://classroom.github.com/online_ide?assignment_repo_id=22449650&assignment_repo_type=AssignmentRepo)
-# 2D Game LAB SHEET 01
-## Player Controller + Health System + Score UI (Unity 2D)
+[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/6gX06Ox4)
+[![Open in Visual Studio Code](https://classroom.github.com/assets/open-in-vscode-2e0aaae1b6195c2367325f4f02e2d04e9abb55f0b24a779b69b11b9e10269abc.svg)](https://classroom.github.com/online_ide?assignment_repo_id=22555398&assignment_repo_type=AssignmentRepo)
+# 2D LAB SHEET 02
+## Health Packs & Enemy System (Unity 2D)
 
 ---
 
 ## Objective
 
-Create a simple 2D scene where:
+To extend the game created in Lab Sheet 01 by adding:
 
-- The player can move using the keyboard  
-- Health is shown on the UI and decreases when hitting an obstacle  
-- Score is shown on the UI (displayed and reset-ready)
+- Health pack objects that restore player health  
+- Enemy objects that damage the player  
+- Automatic destruction of objects after passing the player  
+- Visual distinction between health packs and enemies  
 
 ---
 
 ## Learning Outcomes
 
-By the end of this lab, you will be able to:
+By the end of this lab, students will be able to:
 
-- Build a Unity 2D project from scratch  
-- Create a controllable 2D player  
-- Create UI text (Health + Score)  
-- Reduce health using collision detection  
-- Stop the game when health becomes 0  
-- Prepare health & score systems for restart  
+- Create collectible game objects  
+- Use collision detection for gameplay logic  
+- Modify player health dynamically  
+- Create enemies that interact with the player  
+- Destroy game objects using scripts  
+- Visually differentiate different object types  
 
 ---
 
 ## Requirements
 
-- Unity Hub  
-- Unity Editor (2D Core Template)  
+- Completed Lab Sheet 01 project  
+- Unity Editor (2D Core)  
 - Visual Studio / VS Code  
 
 ---
 
-## Part A — Create the Project 
+## Part A — Create Health Pack Object
 
-1. Open **Unity Hub**
-2. Click **New Project**
-3. Select **2D (Core)**
-4. Project Name: `SE4031_2D_Game`
-5. Click **Create**
+### Step 1: Create Health Pack Sprite
 
-### Save Scene
-
-6. `File → Save As` → name: `MainGame`
+1. Hierarchy → Right Click → 2D Object → Sprite → Circle  
+2. Rename to: HealthPack  
+3. Change color to Green  
 
 ---
 
-## Part B — Create Player Object 
+### Step 2: Add Components
 
-### 1. Create Player
+Add:
 
-Hierarchy → Right Click → Create Empty
-→ Rename to: Player
-
-
----
-
-### 2. Add Sprite
-
-Select Player → Inspector → Add Component → Sprite Renderer
-→ Choose any sprite (Square recommended)
-
+- CircleCollider2D → Is Trigger  
+- (Optional) Rigidbody2D → Gravity Scale = 0  
 
 ---
 
-### 3. Add Physics
+### Step 3: Create Script HealthPack.cs
 
-Add Component → BoxCollider2D
-Add Component → Rigidbody2D
-
-
-Set:
-
-- Gravity Scale = `0`
-- Constraints → Freeze Rotation Z 
-
----
-
-## Part C — Player Movement Script 
-
-### Create Scripts Folder
-
-Project Window → Right click → Create Folder → name: Scripts
-
-
----
-
-### Create Script: `PlayerMovement.cs`
-
-
----
-
-### Create Script: `PlayerMovement.cs`
-
-Scripts → Right click → Create → C# Script → PlayerMovement
+Scripts folder → Create → C# Script → HealthPack  
 
 
 ```csharp
 using UnityEngine;
 
-public class PlayerMovement : MonoBehaviour
+public class HealthPack : MonoBehaviour
 {
-    public float speed = 5f;
-
-    void Update()
-    {
-        float x = Input.GetAxis("Horizontal");
-        float y = Input.GetAxis("Vertical");
-
-        Vector2 move = new Vector2(x, y);
-        transform.Translate(move * speed * Time.deltaTime);
-    }
-}
-```
-
-Attach Script
-
-Drag PlayerMovement.cs → onto Player
-
----
-
-## Part D — Create UI (Health & Score) 
-
-### Create Canvas
-
-Hierarchy → Right Click → UI → Canvas
-
-
----
-
-### Create Health Text
-
-Canvas → Right Click → UI → Text - TextMeshPro
-→ Click "Import TMP Essentials" if asked
-
-
-Rename: `HealthText`  
-Set text: `Health: 100`  
-Anchor: **Top-Left**
-
----
-
-### Create Score Text
-
-Duplicate HealthText → Rename: ScoreText
-Change text: Score: 0
-Anchor: Top-Right
-
-
----
-
-## Part E — Health System Script 
-
-### Create Script: `PlayerHealth.cs`
-
-
-Scripts → Create → C# Script → PlayerHealth
-
-
-Paste:
-
-```csharp
-using UnityEngine;
-using TMPro;
-
-public class PlayerHealth : MonoBehaviour
-{
-    public int maxHealth = 100;
-    public int currentHealth;
-
-    public TMP_Text healthText;
-
-    void Start()
-    {
-        currentHealth = maxHealth;
-        UpdateUI();
-    }
-
-    public void TakeDamage(int amount)
-    {
-        currentHealth -= amount;
-        if (currentHealth < 0) currentHealth = 0;
-
-        UpdateUI();
-
-        if (currentHealth == 0)
-        {
-            Time.timeScale = 0f;
-        }
-    }
-
-    public void ResetHealth()
-    {
-        currentHealth = maxHealth;
-        Time.timeScale = 1f;
-        UpdateUI();
-    }
-
-    void UpdateUI()
-    {
-        healthText.text = "Health: " + currentHealth;
-    }
+    public int healAmount = 20;
 
     void OnTriggerEnter2D(Collider2D other)
     {
-        if (other.CompareTag("Obstacle"))
+        PlayerHealth player = other.GetComponent<PlayerHealth>();
+
+        if (player != null)
         {
-            TakeDamage(10);
+            player.currentHealth = Mathf.Min(player.currentHealth + healAmount, player.maxHealth);
+            player.SendMessage("UpdateUI");
+            Destroy(gameObject);
+        }
+    }
+
+    void Update()
+    {
+        if (transform.position.x < -10f)
+        {
+            Destroy(gameObject);
         }
     }
 }
 ```
+### Step 4: Attach Script
 
-### Attach Script
-
-Drag PlayerHealth.cs → onto Player
-
----
-
-### Link UI
-
-Select Player → PlayerHealth component  
-Drag HealthText → Health Text field
+Drag HealthPack.cs → onto HealthPack
 
 ---
 
-## Part F — Score System Scrips
+## Part B — Create Enemy Object 
 
-### Create GameManager Object
+### Step 1: Create Enemy Sprite
 
-Hierarchy → Right click → Create Empty  
-Rename: GameManager
+Hierarchy → Right Click → 2D Object → Sprite → Square
 
----
+Rename: Enemy
 
-### Create Script: ScoreManager.cs
-
-Scripts → Create → C# Script → ScoreManager
-
-
-```csharp
-using UnityEngine;
-using TMPro;
-
-public class ScoreManager : MonoBehaviour
-{
-    public int score = 0;
-    public TMP_Text scoreText;
-
-    void Start()
-    {
-        UpdateUI();
-    }
-
-    public void AddScore(int value)
-    {
-        score += value;
-        UpdateUI();
-    }
-
-    public void ResetScore()
-    {
-        score = 0;
-        UpdateUI();
-    }
-
-    void UpdateUI()
-    {
-        scoreText.text = "Score: " + score;
-    }
-}
-
-```
-### Attach Script
-
-Drag ScoreManager.cs → onto GameManager
+Change color to Red
 
 ---
 
-### Link UI
+### Step 2: Add Components
 
-Select GameManager → ScoreManager component  
-→ Drag ScoreText → Score Text field
-
----
-
-## Part G — Obstacle Setup
-
-### Create Obstacle
-
-Hierarchy → Right Click → 2D Object → Sprite → Square  
-→ Rename: Obstacle
-
----
-
-### Add
+Add:
 
 BoxCollider2D → Is Trigger
 
----
-
-### Create Tag
-
-Inspector → Tag → Add Tag → create Obstacle  
-→ Assign tag to Obstacle
-
-Move obstacle in front of the player.
+(Optional) Rigidbody2D → Gravity Scale = 0
 
 ---
 
-## Test Your Game
+### Step 3: Create Script Enemy.cs
+
+Scripts → Create → C# Script → Enemy
+
+```csharp
+using UnityEngine;
+
+public class Enemy : MonoBehaviour
+{
+    public int damage = 20;
+
+    void OnTriggerEnter2D(Collider2D other)
+    {
+        PlayerHealth player = other.GetComponent<PlayerHealth>();
+
+        if (player != null)
+        {
+            player.TakeDamage(damage);
+            Destroy(gameObject);
+        }
+    }
+
+    void Update()
+    {
+        if (transform.position.x < -10f)
+        {
+            Destroy(gameObject);
+        }
+    }
+}
+```
+### Step 4: Attach Script
+
+Drag Enemy.cs → onto Enemy
+
+---
+
+## Part C — Simple Spawning
+
+For now:
+
+- Duplicate HealthPack and Enemy objects
+- Place them ahead of the player manually in the scene
+
+(Automatic spawning will be covered in later labs.)
+
+---
+
+## Part D — Visual Differentiation Check
+
+Ensure:
+
+| Object     | Color | Shape  |
+|------------|-------|--------|
+| HealthPack | Green | Circle |
+| Enemy      | Red   | Square |
+
+---
+
+## Testing
 
 Press Play
 
-You should see:
+Check:
 
-✔ Player moves  
-✔ Health UI updates  
-✔ Health decreases on hit  
-✔ Game stops at 0 health  
-✔ Score displays correctly
+- Player collects health pack → health increases
+- Health does not exceed maxHealth
+- Enemy reduces player health
+- Enemy disappears after collision
+- Objects disappear after passing player
+
+
